@@ -1,0 +1,19 @@
+# PILZ Industrial Motion Planner Pipeline Configuration
+planning_pipelines:
+  pipeline_names:
+    - pilz_industrial_motion_planner
+    
+pilz_industrial_motion_planner:
+  planning_plugins:
+    - pilz_industrial_motion_planner/CommandPlanner
+  request_adapters:
+    - default_planning_request_adapters/ResolveConstraintFrames
+    - default_planning_request_adapters/ValidateWorkspaceBounds
+    - default_planning_request_adapters/CheckStartStateBounds
+    - default_planning_request_adapters/CheckStartStateCollision
+  response_adapters:
+    - default_planning_response_adapters/ValidateSolution
+    - default_planning_response_adapters/DisplayMotionPath
+  # Pilz does its own time parameterization, do NOT add AddTimeOptimalParameterization
+  # Also do NOT add any CHOMP-related adapters
+  default_planner_config: PTP
