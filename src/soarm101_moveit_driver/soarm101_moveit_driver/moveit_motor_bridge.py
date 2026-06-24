@@ -268,18 +268,20 @@ class MoveItMotorBridge(Node):
 
 
 def main():
+    from rclpy.executors import ExternalShutdownException, MultiThreadedExecutor
+
     rclpy.init()
     node = MoveItMotorBridge()
-    from rclpy.executors import MultiThreadedExecutor
     executor = MultiThreadedExecutor()
     executor.add_node(node)
     try:
         executor.spin()
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
-        node.destroy_node()
-        rclpy.shutdown()
+        node.destroy_node()          # robot.disconnect() 포함
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == "__main__":

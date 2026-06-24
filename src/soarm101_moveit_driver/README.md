@@ -31,6 +31,26 @@ ros2 launch soarm101_moveit_driver real.launch.py port:=/dev/ttyACM0
 ros2 launch soarm101_moveit_driver real.launch.py dry_run:=true
 ```
 
+### lerobot이 별도 venv에만 설치된 경우
+
+브리지 노드는 `lerobot`을 import 하므로, lerobot이 ROS 파이썬이 아니라 별도 venv에만
+있으면 `bridge_python`으로 그 인터프리터를 지정합니다. (rclpy는 ROS의 `PYTHONPATH`로
+상속되고, lerobot은 venv에서 로드됩니다 — venv와 ROS 모두 Python 3.12여야 합니다.)
+
+```bash
+ros2 launch soarm101_moveit_driver real.launch.py \
+    port:=/dev/so101_follower \
+    bridge_python:=/home/<user>/dev_ws/lerobot_ws/lerobot_venv/bin/python
+```
+
+> 런치 없이 브리지만 venv로 직접 실행할 수도 있습니다:
+> ```bash
+> source /opt/ros/jazzy/setup.bash && source install/setup.bash
+> <venv>/bin/python \
+>   install/soarm101_moveit_driver/lib/soarm101_moveit_driver/moveit_motor_bridge \
+>   --ros-args -p port:=/dev/so101_follower
+> ```
+
 RViz가 뜨면 인터랙티브 마커로 목표 자세를 잡고 **Plan & Execute**를 누르면 실제 팔이 그대로 따라 움직입니다. 그리퍼는 Planning 그룹을 `gripper`로 바꿔 open/close를 Execute 하면 됩니다.
 
 별도 터미널에서 좌표 확인도 동시에 가능합니다:
@@ -67,3 +87,13 @@ pip install lerobot
 - 처음에는 반드시 `dry_run:=true`로 RViz 동작과 trajectory를 확인한 뒤 실제 로봇에 연결하세요.
 - 실제 실행 전, 워크스페이스에 장애물이 없는지·비상정지(전원 차단) 수단이 가까운지 확인하세요.
 - `control_freq`를 너무 높이면 시리얼 버스가 포화될 수 있습니다. 50Hz 전후를 권장합니다.
+- **종료 시 토크 해제 주의:** lerobot 기본 설정상 노드를 종료(Ctrl+C)하면 모터 토크가
+  꺼져 팔이 들린 자세에서 갑자기 내려올 수 있습니다. 종료 전 팔을 낮은 자세로 이동시키거나
+  팔을 받친 상태에서 종료하세요.
+
+## 검증 상태
+
+- ✅ 빌드 / dry-run / move_group 컨트롤러 인식 / trajectory 실행
+- ✅ 실물 SO-ARM101(`/dev/so101_follower`) 연결 후 단일 관절 소동작 구동 및 복귀 확인
+- 부호/오프셋 기본값은 기존 `play_yaml`과 동일. 실제 다축 동작에서 방향이 맞는지
+  처음에는 작은 동작으로 확인하며 `signs`/`offsets_deg`를 조정하세요.

@@ -25,6 +25,7 @@ def generate_launch_description():
     port = LaunchConfiguration("port")
     robot_id = LaunchConfiguration("robot_id")
     dry_run = LaunchConfiguration("dry_run")
+    bridge_python = LaunchConfiguration("bridge_python")
 
     moveit_config = (
         MoveItConfigsBuilder("soarm101_40mmUP", package_name="arm_moveit_config")
@@ -78,10 +79,15 @@ def generate_launch_description():
     )
 
     # 실제 모터 구동 브리지 (액션 서버 + /joint_states)
+    #
+    # lerobot이 별도 venv에만 설치된 경우, bridge_python:=<venv>/bin/python 으로
+    # 그 인터프리터를 prefix로 지정해 노드를 실행한다. (rclpy는 ROS의 PYTHONPATH로
+    # 상속되고, lerobot은 venv site-packages에서 로드됨)
     bridge = Node(
         package="soarm101_moveit_driver",
         executable="moveit_motor_bridge",
         output="screen",
+        prefix=bridge_python,
         parameters=[params_file, {"port": port, "robot_id": robot_id, "dry_run": dry_run}],
     )
 
@@ -92,6 +98,9 @@ def generate_launch_description():
                               description="LeRobot 캘리브레이션 ID"),
         DeclareLaunchArgument("dry_run", default_value="false",
                               description="true면 실제 모터 없이 RViz 표시만"),
+        DeclareLaunchArgument("bridge_python", default_value="",
+                              description="브리지 노드를 실행할 python 인터프리터 "
+                                          "(lerobot이 venv에만 있을 때 <venv>/bin/python 지정)"),
         static_tf,
         rsp,
         move_group,
