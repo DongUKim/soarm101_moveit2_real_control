@@ -60,7 +60,7 @@ RViz에서 그리퍼(인터랙티브 마커)를 드래그할 때, 5-DOF인 SO-AR
 ```bash
 # ROS 2 / MoveIt 의존성
 sudo apt update
-sudo apt install ros-jazzy-moveit ros-jazzy-moveit-planners-pilz
+sudo apt install ros-jazzy-moveit ros-jazzy-pilz-industrial-motion-planner
 
 # 실제 로봇 제어용 Python 의존성
 pip install lerobot ikpy pyyaml numpy
@@ -94,7 +94,7 @@ source install/setup.bash
 ```
 
 > `rosdep`을 처음 쓰는 경우 `sudo rosdep init && rosdep update`를 한 번 실행하세요.
-> rosdep 대신 직접 설치하려면 [요구 사항](#요구-사항)의 `sudo apt install ros-jazzy-moveit ros-jazzy-moveit-planners-pilz`를 먼저 실행하면 됩니다.
+> rosdep 대신 직접 설치하려면 [요구 사항](#요구-사항)의 `sudo apt install ros-jazzy-moveit ros-jazzy-pilz-industrial-motion-planner`를 먼저 실행하면 됩니다.
 
 ### (선택) 인터랙티브 마커 IK용 MoveIt2 패치 적용
 
