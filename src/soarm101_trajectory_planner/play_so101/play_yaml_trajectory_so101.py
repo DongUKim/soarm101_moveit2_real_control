@@ -549,6 +549,7 @@ def main():
     parser.add_argument("--yaml", required=True, help="MoveIt2 trajectory YAML 파일 경로")
     parser.add_argument("--port", default="/dev/so101_follower", help="SO101 USB 포트")
     parser.add_argument("--calibrate", action="store_true", help="캘리브레이션 실행")
+    parser.add_argument("--robot-id", default="my_follower_arm", help="로봇 ID (캘리브레이션 파일 이름)")
     parser.add_argument("--kp", type=float, default=0.3, help="P-control 게인 (기본: 0.3)")
     parser.add_argument("--freq", type=int, default=50, help="제어 주파수 Hz (기본: 50)")
     parser.add_argument("--keep-gripper", type=float, default=0.0, help="그리퍼 고정 각도 (도)")
@@ -621,13 +622,24 @@ def main():
         robot = DummyRobot()
         print("[CONNECT] DRY-RUN 모드 (가상 로봇)")
     else:
-        from lerobot.robots.so101_follower.config_so101_follower import SO101FollowerConfig
-        from lerobot.robots.so101_follower.so101_follower import SO101Follower
+        from lerobot.robots.so_follower import SO101Follower, SO101FollowerConfig
 
         print(f"[CONNECT] port={args.port}")
-        robot_config = SO101FollowerConfig(port=args.port)
+        robot_config = SO101FollowerConfig(port=args.port, id=args.robot_id)
         robot = SO101Follower(robot_config)
-        robot.connect()
+        # 대화형 캘리브레이션 프롬프트 없이 연결만 수행
+        robot.connect(calibrate=False)
+        if args.calibrate:
+            # 새 캘리브레이션을 강제로 실행
+            robot.calibrate()
+        elif not robot.is_calibrated:
+            # 저장된 캘리브레이션 파일(robot.calibration)을 모터에 자동 적용
+            if robot.calibration:
+                print(f"[CONNECT] 캘리브레이션 파일 적용: id={args.robot_id}")
+                robot.bus.write_calibration(robot.calibration)
+            else:
+                print(f"[CONNECT] ⚠ 캘리브레이션 파일 없음(id={args.robot_id}). "
+                      f"--calibrate 로 먼저 캘리브레이션하세요.")
         print("[CONNECT] ✓ 연결됨")
 
     try:

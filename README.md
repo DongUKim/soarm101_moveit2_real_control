@@ -136,7 +136,18 @@ python play_yaml_trajectory_so101.py --yaml trajectory.yaml --dry-run
 # 관절 방향이 반대인 경우 부호 보정
 python play_yaml_trajectory_so101.py --yaml trajectory.yaml \
     --joint-signs "shoulder_lift:-1,elbow_flex:-1"
+
+# 캘리브레이션 ID 지정 (기본: my_follower_arm)
+# ~/.cache/huggingface/lerobot/calibration/robots/so_follower/<id>.json 를 자동 로드
+python play_yaml_trajectory_so101.py --yaml trajectory.yaml --robot-id my_follower_arm
+
+# 캘리브레이션 파일이 없을 때 새로 캘리브레이션 수행
+python play_yaml_trajectory_so101.py --yaml trajectory.yaml --calibrate
 ```
+
+> **참고 (LeRobot 0.5.x):** LeRobot 0.5.x부터 follower 모듈이 `lerobot.robots.so_follower`로
+> 통합되었습니다(이전: `lerobot.robots.so101_follower`). 본 스크립트는 새 경로를 사용하며,
+> 저장된 캘리브레이션 파일이 있으면 대화형 프롬프트 없이 자동 로드합니다.
 
 ### 4. 키보드 / IK 실시간 제어
 
@@ -172,6 +183,8 @@ Base link는 로봇 베이스 중심, end effector(`gripper_link`)의 위치가 
 - **IK solution not found** — 목표 orientation 도달 가능 여부, kinematics solver timeout 확인
 - **MoveIt 연결 실패** — `ros2 node list | grep move_group`으로 move_group 실행 확인
 - **시리얼 포트 권한** — `sudo usermod -aG dialout $USER` 후 재로그인, 포트(`/dev/ttyACM*`) 확인
+- **`ModuleNotFoundError: No module named 'lerobot.robots.so101_follower'`** — LeRobot 0.5.x에서 모듈이 `lerobot.robots.so_follower`로 통합됨. 최신 스크립트로 업데이트하면 해결
+- **연결 시 캘리브레이션 프롬프트에서 멈춤 / `EOFError`** — 저장된 캘리브레이션 파일이 없는 경우. `--calibrate`로 한 번 캘리브레이션하거나 `--robot-id`로 기존 파일 지정
 
 ---
 
