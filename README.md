@@ -1,6 +1,6 @@
 # SO-ARM101 MoveIt2 Real Control
 
-[![ROS2](https://img.shields.io/badge/ROS2-Humble-blue)](https://docs.ros.org/en/humble/)
+[![ROS2](https://img.shields.io/badge/ROS2-Jazzy-blue)](https://docs.ros.org/en/jazzy/)
 [![MoveIt2](https://img.shields.io/badge/MoveIt-2-orange)](https://moveit.picknik.ai/)
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-green)](#license)
 
@@ -36,6 +36,7 @@ RViz에서 그리퍼(인터랙티브 마커)를 드래그할 때, 5-DOF인 SO-AR
   - IK 기반 실시간 제어 (`ikpy`)
   - 키보드 텔레오퍼레이션
 - **RViz 시각화** — MoveIt 데모 및 인터랙티브 마커 기반 그리퍼 포즈 제어 (ver2 패치 필요)
+- **그리퍼 포즈 모니터링** — 그리퍼(`gripper_link`)의 실시간 XYZ/RPY 좌표를 콘솔(`gripper_pose_monitor.py`) 또는 GUI(`gripper_pose_gui.py`)로 출력
 
 ---
 
@@ -47,25 +48,30 @@ RViz에서 그리퍼(인터랙티브 마커)를 드래그할 때, 5-DOF인 SO-AR
 | `arm_moveit_config` | SO-ARM101용 MoveIt2 설정 (SRDF, kinematics, PILZ, 컨트롤러) |
 | `dt_arm_moveit_config` | 대체 디스크립션(`dt_arm_description`) 기반 MoveIt2 설정 |
 | `soarm101_trajectory_planner` | 경로 계획 + YAML 저장/재생 + 실제 로봇 제어 노드/스크립트 |
+| `soarm101_moveit_driver` | **MoveIt 직접 구동 브리지** — RViz의 Plan & Execute가 실제 SO-ARM101을 바로 구동 (YAML 기록/재생 불필요). [README](src/soarm101_moveit_driver/README.md) |
 | `patches/` | 업스트림 MoveIt2에 적용할 패치 (인터랙티브 마커 IK 수정) |
 
 ---
 
 ## 요구 사항
 
-- Ubuntu 22.04 + [ROS 2 Humble](https://docs.ros.org/en/humble/)
+- Ubuntu 24.04 + [ROS 2 Jazzy](https://docs.ros.org/en/jazzy/)
 - MoveIt 2 및 PILZ 플래너
 - 실제 로봇 제어용: [LeRobot](https://github.com/huggingface/lerobot) (Feetech 모터 드라이버), `ikpy`, `pyserial`
 
 ```bash
 # ROS 2 / MoveIt 의존성
-sudo apt install ros-humble-moveit ros-humble-moveit-planners-pilz
+sudo apt update
+sudo apt install ros-jazzy-moveit ros-jazzy-pilz-industrial-motion-planner
 
 # 실제 로봇 제어용 Python 의존성
 pip install lerobot ikpy pyyaml numpy
 ```
 
-> ⚠️ 이 저장소에는 MoveIt2 소스 패키지가 포함되어 있지 않습니다. apt 바이너리(`ros-humble-moveit`)를 사용하거나, 소스 빌드가 필요하면 [moveit2](https://github.com/moveit/moveit2)를 워크스페이스에 추가로 clone 하세요. **인터랙티브 마커 IK를 쓰려면 `patches/`의 패치를 적용한 소스 빌드가 필요합니다.**
+> `ros-jazzy-moveit` 메타패키지가 빌드에 필요한 `moveit_ros_planning_interface`, `moveit_core` 등을 함께 설치합니다. 이걸 설치하지 않으면 `colcon build` 시
+> `Could not find a package configuration file provided by "moveit_ros_planning_interface"` 에러가 납니다.
+
+> ⚠️ 이 저장소에는 MoveIt2 소스 패키지가 포함되어 있지 않습니다. apt 바이너리(`ros-jazzy-moveit`)를 사용하거나, 소스 빌드가 필요하면 [moveit2](https://github.com/moveit/moveit2)를 워크스페이스에 추가로 clone 하세요. **인터랙티브 마커 IK를 쓰려면 `patches/`의 패치를 적용한 소스 빌드가 필요합니다.**
 
 ---
 
@@ -74,22 +80,29 @@ pip install lerobot ikpy pyyaml numpy
 ```bash
 mkdir -p ~/ros2_ws/src
 cd ~/ros2_ws/src
-git clone -b ver2 https://github.com/DongUKim/soarm101_moveit2_real_control.git
+git clone -b ver2_jazzy https://github.com/DongUKim/soarm101_moveit2_real_control.git
 
 # clone된 src 폴더 내용을 워크스페이스 src로 이동
 cp -r soarm101_moveit2_real_control/src/* .
 
+# 의존성 설치 (MoveIt / PILZ 등 package.xml에 선언된 의존성 자동 설치)
 cd ~/ros2_ws
+sudo apt update
+rosdep install --from-paths src --ignore-src -r -y
+
 colcon build --packages-select \
   dt_arm_description arm_moveit_config dt_arm_moveit_config soarm101_trajectory_planner
 source install/setup.bash
 ```
 
+> `rosdep`을 처음 쓰는 경우 `sudo rosdep init && rosdep update`를 한 번 실행하세요.
+> rosdep 대신 직접 설치하려면 [요구 사항](#요구-사항)의 `sudo apt install ros-jazzy-moveit ros-jazzy-pilz-industrial-motion-planner`를 먼저 실행하면 됩니다.
+
 ### (선택) 인터랙티브 마커 IK용 MoveIt2 패치 적용
 
 ```bash
 cd ~/ros2_ws/src
-git clone -b humble https://github.com/moveit/moveit2.git
+git clone -b jazzy https://github.com/moveit/moveit2.git
 cd moveit2
 git apply ~/ros2_ws/src/soarm101_moveit2_real_control/patches/moveit2-position_only_ik-interactive-marker.patch
 cd ~/ros2_ws && colcon build --packages-select moveit_ros_planning
@@ -101,11 +114,45 @@ cd ~/ros2_ws && colcon build --packages-select moveit_ros_planning
 
 ## 사용법
 
+> ### ⚡ 간단 실행 (권장) — MoveIt에서 바로 실제 로봇 구동
+>
+> YAML 기록/재생 없이, RViz에서 **Plan & Execute**만 누르면 실제 SO-ARM101이 움직입니다. (`soarm101_moveit_driver` 패키지)
+>
+> ```bash
+> # 실제 로봇
+> ros2 launch soarm101_moveit_driver real.launch.py port:=/dev/ttyACM0
+> # 로봇 없이 RViz 파이프라인만 확인
+> ros2 launch soarm101_moveit_driver real.launch.py dry_run:=true
+> ```
+>
+> 자세한 내용은 [`src/soarm101_moveit_driver/README.md`](src/soarm101_moveit_driver/README.md). 아래 1~3은 기존(YAML 기록/재생) 방식입니다.
+
 ### 1. MoveIt2 실행 (시뮬레이션 / 플래닝)
 
 ```bash
 ros2 launch arm_moveit_config demo.launch.py
 ```
+
+#### 1-1. 그리퍼 실시간 좌표 모니터링 (콘솔)
+
+`demo.launch.py`가 실행 중인 상태에서 별도 터미널을 열어, 그리퍼(`gripper_link`)의 현재 XYZ/RPY를 콘솔에 실시간 출력합니다. RViz에서 Joints 슬라이더나 인터랙티브 마커로 팔을 움직이면 값이 즉시 갱신됩니다.
+
+```bash
+# 콘솔 출력 버전 (base_link -> gripper_link TF 기준)
+ros2 run soarm101_trajectory_planner gripper_pose_monitor.py
+
+# GUI 창 버전
+ros2 run soarm101_trajectory_planner gripper_pose_gui.py
+```
+
+출력 예시:
+
+```
+Position (m): X=+0.1234  Y=-0.0456  Z=+0.2010  │ (mm): X=+123.4  Y=-45.6  Z=+201.0
+Rotation (deg): R=+0.0°  P=+90.0°  Y=+0.0°
+```
+
+> 좌표는 `base_link`(로봇 베이스) 기준 `gripper_link`(엔드이펙터)의 위치/자세입니다. 0.5mm 미만 변화는 무시하여 같은 줄에서 갱신됩니다.
 
 ### 2. 경로 계획 후 YAML 저장
 
