@@ -48,6 +48,7 @@ RViz에서 그리퍼(인터랙티브 마커)를 드래그할 때, 5-DOF인 SO-AR
 | `arm_moveit_config` | SO-ARM101용 MoveIt2 설정 (SRDF, kinematics, PILZ, 컨트롤러) |
 | `dt_arm_moveit_config` | 대체 디스크립션(`dt_arm_description`) 기반 MoveIt2 설정 |
 | `soarm101_trajectory_planner` | 경로 계획 + YAML 저장/재생 + 실제 로봇 제어 노드/스크립트 |
+| `soarm101_moveit_driver` | **MoveIt 직접 구동 브리지** — RViz의 Plan & Execute가 실제 SO-ARM101을 바로 구동 (YAML 기록/재생 불필요). [README](src/soarm101_moveit_driver/README.md) |
 | `patches/` | 업스트림 MoveIt2에 적용할 패치 (인터랙티브 마커 IK 수정) |
 
 ---
@@ -112,6 +113,19 @@ cd ~/ros2_ws && colcon build --packages-select moveit_ros_planning
 ---
 
 ## 사용법
+
+> ### ⚡ 간단 실행 (권장) — MoveIt에서 바로 실제 로봇 구동
+>
+> YAML 기록/재생 없이, RViz에서 **Plan & Execute**만 누르면 실제 SO-ARM101이 움직입니다. (`soarm101_moveit_driver` 패키지)
+>
+> ```bash
+> # 실제 로봇
+> ros2 launch soarm101_moveit_driver real.launch.py port:=/dev/ttyACM0
+> # 로봇 없이 RViz 파이프라인만 확인
+> ros2 launch soarm101_moveit_driver real.launch.py dry_run:=true
+> ```
+>
+> 자세한 내용은 [`src/soarm101_moveit_driver/README.md`](src/soarm101_moveit_driver/README.md). 아래 1~3은 기존(YAML 기록/재생) 방식입니다.
 
 ### 1. MoveIt2 실행 (시뮬레이션 / 플래닝)
 
