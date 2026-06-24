@@ -36,6 +36,7 @@ RViz에서 그리퍼(인터랙티브 마커)를 드래그할 때, 5-DOF인 SO-AR
   - IK 기반 실시간 제어 (`ikpy`)
   - 키보드 텔레오퍼레이션
 - **RViz 시각화** — MoveIt 데모 및 인터랙티브 마커 기반 그리퍼 포즈 제어 (ver2 패치 필요)
+- **그리퍼 포즈 모니터링** — 그리퍼(`gripper_link`)의 실시간 XYZ/RPY 좌표를 콘솔(`gripper_pose_monitor.py`) 또는 GUI(`gripper_pose_gui.py`)로 출력
 
 ---
 
@@ -117,6 +118,27 @@ cd ~/ros2_ws && colcon build --packages-select moveit_ros_planning
 ```bash
 ros2 launch arm_moveit_config demo.launch.py
 ```
+
+#### 1-1. 그리퍼 실시간 좌표 모니터링 (콘솔)
+
+`demo.launch.py`가 실행 중인 상태에서 별도 터미널을 열어, 그리퍼(`gripper_link`)의 현재 XYZ/RPY를 콘솔에 실시간 출력합니다. RViz에서 Joints 슬라이더나 인터랙티브 마커로 팔을 움직이면 값이 즉시 갱신됩니다.
+
+```bash
+# 콘솔 출력 버전 (base_link -> gripper_link TF 기준)
+ros2 run soarm101_trajectory_planner gripper_pose_monitor.py
+
+# GUI 창 버전
+ros2 run soarm101_trajectory_planner gripper_pose_gui.py
+```
+
+출력 예시:
+
+```
+Position (m): X=+0.1234  Y=-0.0456  Z=+0.2010  │ (mm): X=+123.4  Y=-45.6  Z=+201.0
+Rotation (deg): R=+0.0°  P=+90.0°  Y=+0.0°
+```
+
+> 좌표는 `base_link`(로봇 베이스) 기준 `gripper_link`(엔드이펙터)의 위치/자세입니다. 0.5mm 미만 변화는 무시하여 같은 줄에서 갱신됩니다.
 
 ### 2. 경로 계획 후 YAML 저장
 
