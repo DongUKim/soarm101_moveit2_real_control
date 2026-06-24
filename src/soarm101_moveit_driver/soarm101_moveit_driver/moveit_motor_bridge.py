@@ -55,6 +55,16 @@ DEFAULT_SIGNS = {
 }
 DEFAULT_OFFSETS_DEG = {j: 0.0 for j in ALL_JOINTS}
 
+# 시작 시 이동할 안전한 범위-내 자세(rad). 모델의 관절 소프트리밋 안쪽으로 잡는다.
+# (shoulder_lift 한계 ±1.745, elbow_flex 한계 ±1.69)
+DEFAULT_HOME = {
+    "shoulder_pan": 0.0,
+    "shoulder_lift": 1.5,
+    "elbow_flex": 1.5,
+    "wrist_flex": 0.0,
+    "wrist_roll": 0.0,
+}
+
 
 class MoveItMotorBridge(Node):
     def __init__(self):
@@ -75,6 +85,15 @@ class MoveItMotorBridge(Node):
         self.offsets_deg = {
             j: float(self.declare_parameter(f"offsets_deg.{j}", DEFAULT_OFFSETS_DEG[j]).value)
             for j in ALL_JOINTS
+        }
+
+        # 시작 시 안전 자세로 자동 이동 (시작 자세가 관절 한계를 벗어나 플래닝이
+        # 막히는 것을 방지)
+        self.home_on_start = bool(self.declare_parameter("home_on_start", True).value)
+        self.home_duration = float(self.declare_parameter("home_duration", 4.0).value)
+        self.home = {
+            j: float(self.declare_parameter(f"home.{j}", DEFAULT_HOME[j]).value)
+            for j in ARM_JOINTS
         }
 
         # ── 상태 ────────────────────────────────────────────────────────────
@@ -107,6 +126,9 @@ class MoveItMotorBridge(Node):
             callback_group=cb,
         )
 
+        if self.home_on_start:
+            self._go_home()
+
         mode = "DRY-RUN (가상 모터)" if self.dry_run else f"port={self.port}"
         self.get_logger().info(
             f"MoveIt motor bridge 준비 완료 [{mode}]. RViz에서 Plan & Execute 하세요.")
@@ -130,6 +152,35 @@ class MoveItMotorBridge(Node):
         self.get_logger().info(f"SO-ARM101 연결됨 (port={self.port}, id={self.robot_id}).")
         # 시작 위치를 캐시에 반영
         self._read_into_cache()
+
+    # ────────────────────────────────────────────────────────────────────────
+    # 시작 시 안전 자세로 이동
+    # ────────────────────────────────────────────────────────────────────────
+    def _go_home(self):
+        """현재 위치에서 home 자세로 smoothstep 보간하며 부드럽게 이동."""
+        if self.robot is not None:
+            try:
+                self._read_into_cache()
+            except Exception as e:  # noqa: BLE001
+                self.get_logger().warn(f"home 전 위치 read 실패: {e}")
+        start = {j: self._state_rad[j] for j in ARM_JOINTS}
+        self.get_logger().info(
+            f"home_on_start: {self.home_duration:.1f}s 동안 안전 자세로 이동합니다. "
+            "(주변 공간 확인)")
+        self._executing = True
+        try:
+            dt = 1.0 / self.control_freq
+            t = 0.0
+            while t < self.home_duration:
+                a = t / self.home_duration
+                sa = a * a * (3.0 - 2.0 * a)  # smoothstep
+                self._send_rad({j: start[j] + sa * (self.home[j] - start[j]) for j in ARM_JOINTS})
+                t += dt
+                time.sleep(dt)
+            self._send_rad(dict(self.home))
+        finally:
+            self._executing = False
+        self.get_logger().info("home 자세 도달.")
 
     # ────────────────────────────────────────────────────────────────────────
     # 단위 변환
