@@ -24,8 +24,8 @@ MoveIt2 PILZ planner를 사용하여 LeRobot SO-ARM101의 경로를 계획하고
 ### 의존성
 
 ```bash
-# ROS2 Humble 기준
-sudo apt install ros-humble-moveit ros-humble-moveit-planners-pilz
+# ROS2 Jazzy 기준
+sudo apt install ros-jazzy-moveit ros-jazzy-moveit-planners-pilz
 ```
 
 ### 빌드

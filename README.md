@@ -1,6 +1,6 @@
 # SO-ARM101 MoveIt2 Real Control
 
-[![ROS2](https://img.shields.io/badge/ROS2-Humble-blue)](https://docs.ros.org/en/humble/)
+[![ROS2](https://img.shields.io/badge/ROS2-Jazzy-blue)](https://docs.ros.org/en/jazzy/)
 [![MoveIt2](https://img.shields.io/badge/MoveIt-2-orange)](https://moveit.picknik.ai/)
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-green)](#license)
 
@@ -53,19 +53,19 @@ RViz에서 그리퍼(인터랙티브 마커)를 드래그할 때, 5-DOF인 SO-AR
 
 ## 요구 사항
 
-- Ubuntu 22.04 + [ROS 2 Humble](https://docs.ros.org/en/humble/)
+- Ubuntu 24.04 + [ROS 2 Jazzy](https://docs.ros.org/en/jazzy/)
 - MoveIt 2 및 PILZ 플래너
 - 실제 로봇 제어용: [LeRobot](https://github.com/huggingface/lerobot) (Feetech 모터 드라이버), `ikpy`, `pyserial`
 
 ```bash
 # ROS 2 / MoveIt 의존성
-sudo apt install ros-humble-moveit ros-humble-moveit-planners-pilz
+sudo apt install ros-jazzy-moveit ros-jazzy-moveit-planners-pilz
 
 # 실제 로봇 제어용 Python 의존성
 pip install lerobot ikpy pyyaml numpy
 ```
 
-> ⚠️ 이 저장소에는 MoveIt2 소스 패키지가 포함되어 있지 않습니다. apt 바이너리(`ros-humble-moveit`)를 사용하거나, 소스 빌드가 필요하면 [moveit2](https://github.com/moveit/moveit2)를 워크스페이스에 추가로 clone 하세요. **인터랙티브 마커 IK를 쓰려면 `patches/`의 패치를 적용한 소스 빌드가 필요합니다.**
+> ⚠️ 이 저장소에는 MoveIt2 소스 패키지가 포함되어 있지 않습니다. apt 바이너리(`ros-jazzy-moveit`)를 사용하거나, 소스 빌드가 필요하면 [moveit2](https://github.com/moveit/moveit2)를 워크스페이스에 추가로 clone 하세요. **인터랙티브 마커 IK를 쓰려면 `patches/`의 패치를 적용한 소스 빌드가 필요합니다.**
 
 ---
 
@@ -89,7 +89,7 @@ source install/setup.bash
 
 ```bash
 cd ~/ros2_ws/src
-git clone -b humble https://github.com/moveit/moveit2.git
+git clone -b jazzy https://github.com/moveit/moveit2.git
 cd moveit2
 git apply ~/ros2_ws/src/soarm101_moveit2_real_control/patches/moveit2-position_only_ik-interactive-marker.patch
 cd ~/ros2_ws && colcon build --packages-select moveit_ros_planning

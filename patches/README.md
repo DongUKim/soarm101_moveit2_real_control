@@ -14,10 +14,12 @@
 
 ## 적용 방법
 
-MoveIt2를 소스로 워크스페이스에 clone한 뒤:
+MoveIt2(`jazzy` 브랜치)를 소스로 워크스페이스에 clone한 뒤:
 
 ```bash
-cd ~/ros2_ws/src/moveit2
+cd ~/ros2_ws/src
+git clone -b jazzy https://github.com/moveit/moveit2.git
+cd moveit2
 git apply /path/to/patches/moveit2-position_only_ik-interactive-marker.patch
 
 # 적용 확인
@@ -31,4 +33,11 @@ cd ~/ros2_ws
 colcon build --packages-select moveit_ros_planning
 ```
 
-> apt 바이너리(`ros-humble-moveit`)를 사용하는 경우 이 패치를 직접 적용할 수 없습니다. 인터랙티브 마커 IK가 필요하면 `moveit_ros_planning`을 소스로 빌드해야 합니다.
+> 브랜치에 따라 `kinematics_plugin_loader.cpp`의 라인 번호가 달라 `git apply`가 컨텍스트 불일치로 실패할 수 있습니다. 이 경우 3-way 병합 또는 `patch`로 적용하세요:
+> ```bash
+> git apply --3way /path/to/patches/moveit2-position_only_ik-interactive-marker.patch
+> # 또는
+> patch -p1 < /path/to/patches/moveit2-position_only_ik-interactive-marker.patch
+> ```
+
+> apt 바이너리(`ros-jazzy-moveit`)를 사용하는 경우 이 패치를 직접 적용할 수 없습니다. 인터랙티브 마커 IK가 필요하면 `moveit_ros_planning`을 소스로 빌드해야 합니다.
