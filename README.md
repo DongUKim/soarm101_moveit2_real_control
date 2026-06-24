@@ -157,8 +157,13 @@ ros2 run soarm101_trajectory_planner batch_planner.py -c waypoints.yaml
 
 ### 3. 실제 SO-ARM101에서 재생
 
+`play_so101/`에는 바로 실행해볼 수 있는 샘플 `trajectory.yaml`(소각도 안전 동작 → 0 복귀)이 포함되어 있습니다. 로봇은 먼저 모든 관절을 0°로 이동한 뒤 YAML 경로를 재생합니다.
+
 ```bash
 cd ~/ros2_ws/src/soarm101_trajectory_planner/play_so101
+
+# 빠른 시작: 동봉된 샘플 trajectory.yaml 재생 (포트는 환경에 맞게 변경)
+python play_yaml_trajectory_so101.py --yaml trajectory.yaml --port /dev/so101_follower
 
 # YAML 트래젝토리 재생 (포트는 환경에 맞게 변경)
 python play_yaml_trajectory_so101.py --yaml trajectory.yaml --port /dev/ttyACM0
