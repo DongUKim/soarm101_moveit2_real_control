@@ -6,29 +6,37 @@
 
 MoveIt2와 PILZ Industrial Motion Planner를 사용해 [LeRobot **SO-ARM101**](https://github.com/huggingface/lerobot) 5-DOF 매니퓰레이터의 경로를 계획하고, 이를 **실제 로봇(Feetech 모터)** 에서 재생·제어하는 ROS 2 워크스페이스입니다.
 
-> 워크플로우: **MoveIt2로 경로 계획 → Joint Trajectory를 YAML로 저장 → 실제 SO-ARM101에서 재생/실시간 제어**
+> 워크플로우 (ver3): **MoveIt2에서 Plan & Execute → 실제 SO-ARM101이 바로 구동** (YAML 기록/재생 단계 불필요)
 
-> **현재 브랜치: `ver2`** — ver1 대비 변경점은 아래 [변경 이력](#변경-이력-ver1--ver2) 참고.
+> **현재 브랜치: `ver3_jazzy`** (Ubuntu 24.04 + ROS 2 Jazzy). 변경점은 아래 [변경 이력](#변경-이력) 참고.
+> Humble(22.04) 버전은 `ver2_humble` 브랜치를 사용하세요.
 
 ---
 
-## 변경 이력 (ver1 → ver2)
+## 변경 이력
+
+### ver3 (Jazzy 직접 구동) — `ver3_jazzy`
+
+| 구분 | 내용 |
+|------|------|
+| 🚀 추가 | **`soarm101_moveit_driver`** — MoveIt 직접 구동 브리지. RViz의 Plan & Execute가 `FollowJointTrajectory`/`GripperCommand` 액션으로 실제 모터를 바로 구동하고, 실제 엔코더를 `/joint_states`로 피드백. **YAML 기록/재생 불필요** |
+| 🏠 추가 | **자동 홈(`home_on_start`)** — 연결 직후 안전한 범위-내 자세로 자동 정렬해, 시작 자세가 관절 한계를 벗어나 플래닝이 막히는 문제 방지 |
+| 🎯 추가 | **`setup` named target** — 초기 셋업(들린) 자세 프리셋. 관절 한계 확장 + 접힌 자세 오탐 충돌쌍 비활성화로 플래닝 가능 |
+| 🔧 변경 | **ROS 2 Humble(22.04) → Jazzy(24.04) 포팅** — apt 패키지명, PILZ 플래너(`ros-jazzy-pilz-industrial-motion-planner`), PILZ 파이프라인 설정(flat 구조)을 Jazzy 기준으로 수정 |
+
+### ver2 (인터랙티브 마커 IK 패치)
 
 | 구분 | 내용 |
 |------|------|
 | ✨ 추가 | **RViz 인터랙티브 마커 IK 수정용 MoveIt2 패치** (`patches/`) |
-| 📦 동일 | 커스텀 패키지 4개(`dt_arm_description`, `arm_moveit_config`, `dt_arm_moveit_config`, `soarm101_trajectory_planner`)는 ver1과 내용 동일 |
 
-**ver2의 핵심 변경 — 그리퍼 인터랙티브 마커 IK 수정**
-
-RViz에서 그리퍼(인터랙티브 마커)를 드래그할 때, 5-DOF인 SO-ARM101에 대해 MoveIt이 6-DOF full IK를 시도해 해를 찾지 못하고 마커가 따라오지 못하는 문제가 있었습니다. 원인은 RViz 노드가 솔버별 파라미터(`position_only_ik`)를 declare하지 않아 무시되는 것이었고, `moveit2`의 `kinematics_plugin_loader.cpp`에서 해당 파라미터를 명시적으로 declare하도록 수정해 해결했습니다.
-
-이 변경은 업스트림 `moveit2` 소스에 대한 패치이므로, 저장소 용량을 위해 전체 소스 대신 **패치 파일**(`patches/moveit2-position_only_ik-interactive-marker.patch`)로 포함했습니다. 적용 방법은 [`patches/README.md`](patches/README.md) 참고.
+RViz에서 그리퍼(인터랙티브 마커)를 드래그할 때, 5-DOF인 SO-ARM101에 대해 MoveIt이 6-DOF full IK를 시도해 해를 찾지 못하는 문제를 `moveit2`의 `kinematics_plugin_loader.cpp`에서 `position_only_ik` 파라미터를 명시적으로 declare하도록 수정해 해결했습니다. 저장소 용량을 위해 전체 소스 대신 **패치 파일**(`patches/moveit2-position_only_ik-interactive-marker.patch`)로 포함했습니다. 적용 방법은 [`patches/README.md`](patches/README.md) 참고.
 
 ---
 
 ## 주요 기능
 
+- **MoveIt 직접 구동 (ver3, 권장)** — RViz에서 Plan & Execute하면 실제 SO-ARM101이 바로 움직임. 시작 시 안전 자세 자동 정렬(`home_on_start`). (`soarm101_moveit_driver`)
 - **MoveIt2 모션 플래닝** — PILZ Industrial Motion Planner (PTP / LIN) 기반 경로 계획
 - **Trajectory 저장/재생** — 계획된 Joint Trajectory를 메타데이터와 함께 YAML로 직렬화
 - **실제 로봇 제어** — LeRobot / Feetech 모터 버스를 통해 물리 SO-ARM101 구동
@@ -80,7 +88,7 @@ pip install lerobot ikpy pyyaml numpy
 ```bash
 mkdir -p ~/ros2_ws/src
 cd ~/ros2_ws/src
-git clone -b ver2_jazzy https://github.com/DongUKim/soarm101_moveit2_real_control.git
+git clone -b ver3_jazzy https://github.com/DongUKim/soarm101_moveit2_real_control.git
 
 # clone된 src 폴더 내용을 워크스페이스 src로 이동
 cp -r soarm101_moveit2_real_control/src/* .
@@ -91,7 +99,8 @@ sudo apt update
 rosdep install --from-paths src --ignore-src -r -y
 
 colcon build --packages-select \
-  dt_arm_description arm_moveit_config dt_arm_moveit_config soarm101_trajectory_planner
+  dt_arm_description arm_moveit_config dt_arm_moveit_config \
+  soarm101_trajectory_planner soarm101_moveit_driver
 source install/setup.bash
 ```
 
@@ -125,6 +134,8 @@ cd ~/ros2_ws && colcon build --packages-select moveit_ros_planning
 > ros2 launch soarm101_moveit_driver real.launch.py dry_run:=true
 > ```
 >
+> `lerobot`이 별도 venv에만 설치돼 있으면 `bridge_python:=<venv>/bin/python` 인자를 추가하세요.
+> 연결 직후 자동으로 안전 자세(`home`)로 정렬되고, RViz에서 Plan & Execute하면 실제 팔이 움직입니다.
 > 자세한 내용은 [`src/soarm101_moveit_driver/README.md`](src/soarm101_moveit_driver/README.md). 아래 1~3은 기존(YAML 기록/재생) 방식입니다.
 
 ### 1. MoveIt2 실행 (시뮬레이션 / 플래닝)
@@ -225,6 +236,7 @@ Base link는 로봇 베이스 중심, end effector(`gripper_link`)의 위치가 
 |------------|------|----------------|------|
 | `home` | 초기 대기 자세 | `open` | 그리퍼 열림 |
 | `zero` | 모든 관절 0도 | `close` | 그리퍼 닫힘 |
+| `setup` | 초기 셋업(들린) 자세 | | |
 
 ---
 
