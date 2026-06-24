@@ -59,11 +59,15 @@ RViz에서 그리퍼(인터랙티브 마커)를 드래그할 때, 5-DOF인 SO-AR
 
 ```bash
 # ROS 2 / MoveIt 의존성
+sudo apt update
 sudo apt install ros-jazzy-moveit ros-jazzy-moveit-planners-pilz
 
 # 실제 로봇 제어용 Python 의존성
 pip install lerobot ikpy pyyaml numpy
 ```
+
+> `ros-jazzy-moveit` 메타패키지가 빌드에 필요한 `moveit_ros_planning_interface`, `moveit_core` 등을 함께 설치합니다. 이걸 설치하지 않으면 `colcon build` 시
+> `Could not find a package configuration file provided by "moveit_ros_planning_interface"` 에러가 납니다.
 
 > ⚠️ 이 저장소에는 MoveIt2 소스 패키지가 포함되어 있지 않습니다. apt 바이너리(`ros-jazzy-moveit`)를 사용하거나, 소스 빌드가 필요하면 [moveit2](https://github.com/moveit/moveit2)를 워크스페이스에 추가로 clone 하세요. **인터랙티브 마커 IK를 쓰려면 `patches/`의 패치를 적용한 소스 빌드가 필요합니다.**
 
@@ -74,16 +78,23 @@ pip install lerobot ikpy pyyaml numpy
 ```bash
 mkdir -p ~/ros2_ws/src
 cd ~/ros2_ws/src
-git clone -b ver2 https://github.com/DongUKim/soarm101_moveit2_real_control.git
+git clone -b ver2_jazzy https://github.com/DongUKim/soarm101_moveit2_real_control.git
 
 # clone된 src 폴더 내용을 워크스페이스 src로 이동
 cp -r soarm101_moveit2_real_control/src/* .
 
+# 의존성 설치 (MoveIt / PILZ 등 package.xml에 선언된 의존성 자동 설치)
 cd ~/ros2_ws
+sudo apt update
+rosdep install --from-paths src --ignore-src -r -y
+
 colcon build --packages-select \
   dt_arm_description arm_moveit_config dt_arm_moveit_config soarm101_trajectory_planner
 source install/setup.bash
 ```
+
+> `rosdep`을 처음 쓰는 경우 `sudo rosdep init && rosdep update`를 한 번 실행하세요.
+> rosdep 대신 직접 설치하려면 [요구 사항](#요구-사항)의 `sudo apt install ros-jazzy-moveit ros-jazzy-moveit-planners-pilz`를 먼저 실행하면 됩니다.
 
 ### (선택) 인터랙티브 마커 IK용 MoveIt2 패치 적용
 
